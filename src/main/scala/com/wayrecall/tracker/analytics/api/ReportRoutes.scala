@@ -2,6 +2,7 @@ package com.wayrecall.tracker.analytics.api
 
 import com.wayrecall.tracker.analytics.cache.ReportCache
 import com.wayrecall.tracker.analytics.domain.*
+import com.wayrecall.tracker.analytics.domain.AnalyticsError.ErrorResponse
 import com.wayrecall.tracker.analytics.generator.*
 import com.wayrecall.tracker.analytics.query.QueryEngine
 import zio.*
@@ -152,35 +153,37 @@ object ReportRoutes:
     ZIO.attempt {
       val url = req.url
       val orgId = url.queryParams.get("orgId")
-        .flatMap(_.headOption).flatMap(_.toLongOption)
+        .flatMap(_.toLongOption)
         .getOrElse(throw new RuntimeException("orgId обязателен"))
       val vehicleIds = url.queryParams.get("vehicleIds")
-        .flatMap(_.headOption)
         .map(_.split(",").flatMap(_.toLongOption).toList)
         .getOrElse(List.empty)
-      val from = url.queryParams.get("from")
-        .flatMap(_.headOption)
+      val fromDate = url.queryParams.get("from")
         .map(LocalDate.parse(_, dateFormatter))
         .getOrElse(throw new RuntimeException("from обязателен (yyyy-MM-dd)"))
-      val to = url.queryParams.get("to")
-        .flatMap(_.headOption)
+      val toDate = url.queryParams.get("to")
         .map(LocalDate.parse(_, dateFormatter))
         .getOrElse(throw new RuntimeException("to обязателен (yyyy-MM-dd)"))
       val speedLimit = url.queryParams.get("speedLimit")
-        .flatMap(_.headOption).flatMap(_.toDoubleOption)
+        .flatMap(_.toIntOption)
       val includeTrips = url.queryParams.get("includeTrips")
-        .flatMap(_.headOption).map(_ == "true").getOrElse(false)
+        .map(_ == "true").getOrElse(false)
 
       ReportParams(
         organizationId = orgId,
         vehicleIds = vehicleIds,
-        from = from,
-        to = to,
-        speedLimit = speedLimit,
-        includeTrips = includeTrips
+        groupIds = List.empty,
+        from = fromDate.atStartOfDay(java.time.ZoneOffset.UTC).toInstant,
+        to = toDate.plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant,
+        reportType = ReportType.Mileage,
+        groupBy = url.queryParams.get("groupBy"),
+        includeTrips = Some(includeTrips),
+        includeEvents = url.queryParams.get("includeEvents").map(_ == "true"),
+        geozoneIds = None,
+        speedLimit = speedLimit
       )
     }
 
   /** Стандартный ответ об ошибке */
   private def errorResponse(status: Int, message: String): Response =
-    Response.json(ErrorResponse("error", message).toJson).status(Status.fromInt(status))
+    Response.json(ErrorResponse("error", message).toJson).status(Status.fromInt(status).getOrElse(Status.BadRequest))

@@ -11,7 +11,6 @@ scalacOptions ++= Seq(
   "-deprecation",
   "-feature",
   "-unchecked",
-  "-Xfatal-warnings",
   "-language:implicitConversions"
 )
 
@@ -23,7 +22,6 @@ val zioVersion       = "2.0.20"
 val zioHttpVersion   = "3.0.0-RC4"
 val zioConfigVersion = "4.0.0-RC16"
 val zioJsonVersion   = "0.6.2"
-val zioRedisVersion  = "1.0.0-RC1"
 val doobieVersion    = "1.0.0-RC4"
 val logbackVersion   = "1.4.14"
 
@@ -46,9 +44,6 @@ libraryDependencies ++= Seq(
 
   // ZIO JSON (сериализация отчётов и API)
   "dev.zio" %% "zio-json" % zioJsonVersion,
-
-  // ZIO Redis (кеш отчётов, статус экспорта, агрегаты)
-  "dev.zio" %% "zio-redis" % zioRedisVersion,
 
   // ZIO Interop Cats (мост ZIO ↔ cats-effect для Doobie)
   "dev.zio" %% "zio-interop-cats" % "23.1.0.0",

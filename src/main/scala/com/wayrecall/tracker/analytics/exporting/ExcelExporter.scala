@@ -1,4 +1,4 @@
-package com.wayrecall.tracker.analytics.export
+package com.wayrecall.tracker.analytics.exporting
 
 import com.wayrecall.tracker.analytics.domain.*
 import zio.*

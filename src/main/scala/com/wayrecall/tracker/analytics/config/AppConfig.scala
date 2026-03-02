@@ -57,7 +57,8 @@ final case class ExportConfig(
 /** Настройки планировщика */
 final case class SchedulerConfig(
     enabled: Boolean,
-    checkIntervalSeconds: Int
+    checkIntervalSeconds: Int,
+    maxConcurrentSchedules: Int
 )
 
 /** Настройки HTTP сервера */

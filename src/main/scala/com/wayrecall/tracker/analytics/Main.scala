@@ -3,15 +3,14 @@ package com.wayrecall.tracker.analytics
 import com.wayrecall.tracker.analytics.api.*
 import com.wayrecall.tracker.analytics.cache.ReportCache
 import com.wayrecall.tracker.analytics.config.AppConfig
-import com.wayrecall.tracker.analytics.export.ExportService
+import com.wayrecall.tracker.analytics.exporting.ExportService
 import com.wayrecall.tracker.analytics.generator.*
-import com.wayrecall.tracker.analytics.infrastructure.{TransactorLayer, TransactorTags}
+import com.wayrecall.tracker.analytics.infrastructure.TransactorLayer
 import com.wayrecall.tracker.analytics.query.QueryEngine
 import com.wayrecall.tracker.analytics.repository.*
 import com.wayrecall.tracker.analytics.scheduler.ReportScheduler
 import zio.*
 import zio.http.*
-import zio.logging.backend.SLF4J
 
 // ============================================================
 // Main — точка входа Analytics Service (порт 8095)
@@ -19,9 +18,6 @@ import zio.logging.backend.SLF4J
 // ============================================================
 
 object Main extends ZIOAppDefault:
-
-  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    Runtime.removeDefaultLoggers >>> SLF4J.slf4j
 
   override def run: ZIO[Any, Any, Any] =
     val program = for {
@@ -39,28 +35,22 @@ object Main extends ZIOAppDefault:
                    ScheduledRoutes.routes
 
       // Запускаем HTTP-сервер
-      _         <- Server.serve(allRoutes)
+      _         <- Server.serve(allRoutes.toHttpApp)
     } yield ()
 
     program.provide(
       // Конфигурация
       AppConfig.live,
 
-      // Транзакторы БД
-      TransactorLayer.timescale,
-      TransactorLayer.postgres,
-
-      // Redis
-      zio.redis.Redis.local,
-      zio.redis.RedisExecutor.local,
-      zio.redis.CodecSupplier.utf8,
+      // Единый транзактор БД (PostgreSQL / TimescaleDB)
+      TransactorLayer.live,
 
       // Репозитории
       ReportTemplateRepository.live,
       ScheduledReportRepository.live,
       ReportHistoryRepository.live,
 
-      // Кэш
+      // Кэш (in-memory Ref)
       ReportCache.live,
 
       // Query Engine
@@ -82,7 +72,7 @@ object Main extends ZIOAppDefault:
 
       // Конфиг-слои для компонентов
       ZLayer.service[AppConfig].flatMap(env =>
-        ZLayer.succeed(env.get.export) ++
+        ZLayer.succeed(env.get.`export`) ++
         ZLayer.succeed(env.get.s3) ++
         ZLayer.succeed(env.get.scheduler) ++
         ZLayer.succeed(env.get.cache) ++

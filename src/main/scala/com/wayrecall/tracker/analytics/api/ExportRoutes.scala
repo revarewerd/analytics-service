@@ -1,7 +1,8 @@
 package com.wayrecall.tracker.analytics.api
 
 import com.wayrecall.tracker.analytics.domain.*
-import com.wayrecall.tracker.analytics.export.ExportService
+import com.wayrecall.tracker.analytics.domain.AnalyticsError.ErrorResponse
+import com.wayrecall.tracker.analytics.exporting.ExportService
 import zio.*
 import zio.http.*
 import zio.json.*
@@ -64,4 +65,4 @@ object ExportRoutes:
   )
 
   private def errorResponse(status: Int, message: String): Response =
-    Response.json(ErrorResponse("error", message).toJson).status(Status.fromInt(status))
+    Response.json(ErrorResponse("error", message).toJson).status(Status.fromInt(status).getOrElse(Status.BadRequest))

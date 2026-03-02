@@ -1,4 +1,4 @@
-package com.wayrecall.tracker.analytics.export
+package com.wayrecall.tracker.analytics.exporting
 
 import com.wayrecall.tracker.analytics.cache.ReportCache
 import com.wayrecall.tracker.analytics.config.{ExportConfig, S3Config}

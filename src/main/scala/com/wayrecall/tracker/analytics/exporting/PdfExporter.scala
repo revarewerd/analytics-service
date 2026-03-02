@@ -1,7 +1,7 @@
-package com.wayrecall.tracker.analytics.export
+package com.wayrecall.tracker.analytics.exporting
 
 import com.wayrecall.tracker.analytics.domain.*
-import com.lowagie.text.*
+import com.lowagie.text.{Document, Element, FontFactory, PageSize, Paragraph, Phrase, Rectangle, Chunk as LChunk}
 import com.lowagie.text.pdf.{PdfPTable, PdfWriter, PdfPCell}
 import zio.*
 import java.io.{File, FileOutputStream}
@@ -33,7 +33,7 @@ object PdfExporter:
         s"Период: ${report.period.from} — ${report.period.to}",
         FontFactory.getFont(FontFactory.HELVETICA, 10f)
       ))
-      document.add(Chunk.NEWLINE)
+      document.add(LChunk.NEWLINE)
 
       // Итого
       val summaryTable = new PdfPTable(2)
@@ -44,7 +44,7 @@ object PdfExporter:
       addRow(summaryTable, "Средняя скорость", f"${report.averageSpeed}%.2f")
       addRow(summaryTable, "Макс. скорость", f"${report.maxSpeed}%.1f")
       document.add(summaryTable)
-      document.add(Chunk.NEWLINE)
+      document.add(LChunk.NEWLINE)
 
       // Суточные данные
       if report.dailyData.nonEmpty then
@@ -89,7 +89,7 @@ object PdfExporter:
         s"Период: ${report.period.from} — ${report.period.to}",
         FontFactory.getFont(FontFactory.HELVETICA, 10f)
       ))
-      document.add(Chunk.NEWLINE)
+      document.add(LChunk.NEWLINE)
 
       // Итого
       val summaryTable = new PdfPTable(2)
@@ -100,13 +100,13 @@ object PdfExporter:
       addRow(summaryTable, "Общий расход (л)", f"${report.totalFuelConsumedLiters}%.2f")
       addRow(summaryTable, "Общие моточасы", f"${report.totalEngineHours}%.2f")
       document.add(summaryTable)
-      document.add(Chunk.NEWLINE)
+      document.add(LChunk.NEWLINE)
 
       // Таблица ТС
       if report.vehicles.nonEmpty then
         val table = new PdfPTable(7)
         table.setWidthPercentage(100)
-        List("ТС", "Пробег (км)", "Расход (л)", "Моточасы", "Макс. скорость", "Нарушения", "Простой (мин)")
+        scala.List("ТС", "Пробег (км)", "Расход (л)", "Моточасы", "Макс. скорость", "Нарушения", "Простой (мин)")
           .foreach(addHeaderCell(table, _))
 
         report.vehicles.foreach { v =>
