@@ -23,10 +23,12 @@ final class SummaryReportGeneratorLive(queryEngine: QueryEngine) extends Summary
 
   override def generate(params: ReportParams, vehicleIds: List[Long]): Task[SummaryReport] =
     for {
+      _ <- ZIO.logInfo(s"Отчёт СВОДНЫЙ: org=${params.organizationId}, ТС=${vehicleIds.size}, период=${params.from}..${params.to}")
       // Генерируем сводку по каждому ТС
       vehicleSummaries <- ZIO.foreachPar(vehicleIds) { vehicleId =>
         generateVehicleSummary(params, vehicleId)
       }
+      _ <- ZIO.logDebug(s"Отчёт СВОДНЫЙ: org=${params.organizationId} — обработано ${vehicleSummaries.size} ТС")
 
       // Считаем итоги по организации
       totalMileage     = vehicleSummaries.map(_.mileageKm).sum

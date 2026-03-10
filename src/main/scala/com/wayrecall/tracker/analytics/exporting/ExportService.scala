@@ -66,6 +66,7 @@ final class ExportServiceLive(
   override def createExportTask(request: ExportRequest): Task[ExportTaskCreated] =
     val taskId = UUID.randomUUID().toString
     for {
+      _ <- ZIO.logInfo(s"Экспорт: создана задача $taskId, тип=${request.reportType}, формат=${request.format}, org=${request.organizationId}")
       // Сохраняем задачу в Redis
       _ <- cache.setExportTask(taskId, Map(
         "status"     -> "pending",

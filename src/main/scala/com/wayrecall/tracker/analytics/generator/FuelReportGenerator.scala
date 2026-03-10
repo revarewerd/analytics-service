@@ -23,10 +23,12 @@ final class FuelReportGeneratorLive(queryEngine: QueryEngine) extends FuelReport
 
   override def generate(params: ReportParams, vehicleId: Long): Task[FuelReport] =
     for {
+      _ <- ZIO.logInfo(s"Отчёт ТОПЛИВО: ТС=$vehicleId, период=${params.from}..${params.to}")
       // Получаем почасовые данные о топливе
       hourlyStats <- queryEngine.getHourlyFuelStats(vehicleId, params.from, params.to)
       // Получаем суточные данные о пробеге
       dailyStats  <- queryEngine.getDailyVehicleStats(vehicleId, params.from, params.to)
+      _ <- ZIO.logDebug(s"Отчёт ТОПЛИВО: ТС=$vehicleId — ${hourlyStats.size} почасовых, ${dailyStats.size} суточных записей")
       // Для детализации событий — raw GPS точки
       gpsPoints   <- if params.includeEvents.getOrElse(true) then
         queryEngine.getGpsPoints(vehicleId, params.from, params.to)
@@ -36,6 +38,8 @@ final class FuelReportGeneratorLive(queryEngine: QueryEngine) extends FuelReport
       events = FuelEventDetector.detectEvents(gpsPoints)
       refuels = events.filter(_.eventType == "refuel")
       drains  = events.filter(_.eventType == "drain")
+      _ <- ZIO.when(drains.nonEmpty)(ZIO.logWarning(s"Отчёт ТОПЛИВО: ТС=$vehicleId — обнаружено ${drains.size} сливов!"))
+      _ <- ZIO.logDebug(s"Отчёт ТОПЛИВО: ТС=$vehicleId — заправок=${refuels.size}, сливов=${drains.size}")
 
       // Считаем суточный расход
       dailyConsumption = buildDailyFuel(hourlyStats, dailyStats)

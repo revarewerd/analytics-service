@@ -127,10 +127,16 @@ object TripDetector:
           val dur = Duration.between(s.points.head.timestamp, s.points.last.timestamp)
           if dur.getSeconds < MinParkingDurationSec then
             // Короткая стоянка — объединяем с предыдущим сегментом движения
-            acc match
-              case (prev: MovingSegment) :: rest =>
-                MovingSegment(prev.points ++ s.points) :: rest
+            acc.lastOption match
+              case Some(prev: MovingSegment) =>
+                acc.init :+ MovingSegment(prev.points ++ s.points)
               case _ => acc :+ s
           else acc :+ s
+        case m: MovingSegment =>
+          // Если предыдущий сегмент тоже движение — объединяем (после слияния короткой стоянки)
+          acc.lastOption match
+            case Some(prev: MovingSegment) =>
+              acc.init :+ MovingSegment(prev.points ++ m.points)
+            case _ => acc :+ m
         case other => acc :+ other
     }

@@ -22,10 +22,12 @@ final class MileageReportGeneratorLive(queryEngine: QueryEngine) extends Mileage
 
   override def generate(params: ReportParams, vehicleId: Long): Task[MileageReport] =
     for {
+      _ <- ZIO.logInfo(s"Отчёт ПРОБЕГ: ТС=$vehicleId, период=${params.from}..${params.to}")
       // Получаем суточные агрегаты из continuous aggregates
       dailyStats <- queryEngine.getDailyVehicleStats(vehicleId, params.from, params.to)
       // Получаем статистику движения для моточасов
       motionStats <- queryEngine.getDailyMotionStats(vehicleId, params.from, params.to)
+      _ <- ZIO.logDebug(s"Отчёт ПРОБЕГ: ТС=$vehicleId — ${dailyStats.size} суточных записей, ${motionStats.size} записей движения")
 
       // Конвертируем в DailyMileage
       dailyData = dailyStats.map { ds =>
